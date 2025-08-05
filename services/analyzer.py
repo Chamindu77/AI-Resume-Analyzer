@@ -1,9 +1,59 @@
 import google.generativeai as genai
 
+# def analyze_resume(resume_text, job_title, job_description):
+#     model = genai.GenerativeModel('gemini-2.0-flash-exp-image-generation')
+#     prompt = f"""
+# Act as an expert resume analyst and career coach. You are analyzing a resume for a "{job_title}" position.
+
+# JOB DESCRIPTION:
+# {job_description}
+
+# RESUME:
+# {resume_text}
+
+# Please provide a structured analysis as follows:
+# Please follow the structure exactly and ensure all five sections are included in the response.
+
+
+# 1. **Match Score**  
+# Provide only a numeric percentage indicating how well the resume matches the job description.  
+# Format: `85%` (No other text or explanation).
+
+# 2. **Matching Skills/Keywords**  
+# List point-wise the specific skills or keywords that are present in both the resume and job description.
+
+# 3. **Missing Skills/Keywords**  
+# List point-wise the important skills or keywords from the job description that are missing in the resume.
+
+# 4. **Recommendations for Improvement**  
+# Provide 3 to 5 clear, actionable suggestions to improve this resume for this specific job application.
+
+# 5. **ATS Optimization Score**  
+# Give a score between 0 and 100 indicating how well this resume is optimized for Applicant Tracking Systems (ATS).  
+
+# 6. Justification: Also include 1–2 brief points justifying this score (e.g., keyword usage, formatting, etc.).
+
+# """
+#     try:
+#         response = model.generate_content(prompt)
+#         print("Gemini response:", response.text)
+#         return response.text
+#     except Exception as e:
+#         return f"Error analyzing resume: {e}"
+
+
+def get_response_from_prompt(prompt: str):
+    model = genai.GenerativeModel('gemini-1.5-flash') #gemini-2.0-flash-exp-image-generation #gemini-1.5-flash
+    try:
+        response = model.generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        return f"Error: {e}"
+
 def analyze_resume(resume_text, job_title, job_description):
-    model = genai.GenerativeModel('gemini-2.0-flash-exp-image-generation')
-    prompt = f"""
-Act as an expert resume analyst and career coach. You are analyzing a resume for a "{job_title}" position.
+    shared_prompt_prefix = f"""
+You are an expert resume analyst and career coach.
+Analyze the resume for a "{job_title}" position.
 
 JOB DESCRIPTION:
 {job_description}
@@ -11,35 +61,99 @@ JOB DESCRIPTION:
 RESUME:
 {resume_text}
 
-Please provide a structured analysis as follows:
-Please follow the structure exactly and ensure all five sections are included in the response.
+"""
 
+    # Define modular prompts
+    match_score_prompt = shared_prompt_prefix + """
+1. Match Score:
+Provide only a numeric percentage indicating how well the resume matches the job description. 
+Format: `85%` (no other text).
+"""
 
-1. **Match Score**  
-Provide only a numeric percentage indicating how well the resume matches the job description.  
-Format: `85%` (No other text or explanation).
+    matching_keywords_prompt = shared_prompt_prefix + """
+2. Matching Skills:
+Compare the JOB DESCRIPTION and the RESUME.
 
-2. **Matching Skills/Keywords**  
-List point-wise the specific skills or keywords that are present in both the resume and job description.
+1. Extract only the technical skills, programming languages, libraries, frameworks, tools, and platforms mentioned in the JOB DESCRIPTION.
+   (Ignore soft skills, job responsibilities, or general descriptions.)
 
-3. **Missing Skills/Keywords**  
-List point-wise the important skills or keywords from the job description that are missing in the resume.
+2. From this list, identify:
+   - Which of those skills are also found in the RESUME.
+   - Which are missing (not found in the RESUME).
 
-4. **Recommendations for Improvement**  
-Provide 3 to 5 clear, actionable suggestions to improve this resume for this specific job application.
+3. Return the result in the following format:
+- Match Count: `X/Y` (X = number of matched skills, Y = total required skills from the JD)
+- ✅ Matching Skills:
+  - ...
+  - ...
 
-5. **ATS Optimization Score**  
-Give a score between 0 and 100 indicating how well this resume is optimized for Applicant Tracking Systems (ATS).  
+- Miss Count: `Z/Y` (Z = number of not matched skills, Y = total required skills from the JD)
+- ❌ Missing Skills:
+  - ...
+  - ...
 
-6. Justification: Also include 1–2 brief points justifying this score (e.g., keyword usage, formatting, etc.).
+Do NOT include any explanations, summaries, or non-technical content. Only return the structured result in the format above.
 
 """
-    try:
-        response = model.generate_content(prompt)
-        print("Gemini response:", response.text)
-        return response.text
-    except Exception as e:
-        return f"Error analyzing resume: {e}"
+
+    missing_keywords_prompt = shared_prompt_prefix + """
+3. Missing Skills/Keywords:
+List point-wise the important skills or keywords from the job description that are missing in the resume.
+Return the result as a bullet-point list.
+Be concise. Do not include any explanation or extra text.
+"""
+
+    recommendations_prompt = shared_prompt_prefix + """
+4. Recommendations for Improvement:
+Based on the resume and job description, provide 3 to 5 **clear, actionable suggestions** to improve the resume **for this specific job**.
+Write in a concise, friendly tone.
+Use bullet points.
+Do NOT include explanations, just the suggestions."""
+
+    ats_score_prompt = shared_prompt_prefix + """
+5. ATS Optimization Score:
+Assess how well the resume is optimized for Applicant Tracking Systems (ATS).
+1. Provide an overall ATS optimization score as a **percentage** (e.g., `85%`). Do NOT add extra text before or after the score.
+2. Then, give 1–2 short bullet points explaining **why** this score was given (e.g., keyword usage, formatting, structure).
+Keep it concise and user-friendly.
+
+"""
+
+    # Call Gemini for each section
+    match_score = get_response_from_prompt(match_score_prompt)
+    matching_keywords = get_response_from_prompt(matching_keywords_prompt)
+    missing_keywords = get_response_from_prompt(missing_keywords_prompt)
+    recommendations = get_response_from_prompt(recommendations_prompt)
+    ats_score = get_response_from_prompt(ats_score_prompt)
+
+    # Combine into structured markdown
+    analysis_result = f"""
+### 📈 Match Score
+{match_score}
+
+---
+
+### ✅ Matching Skills/Keywords
+{matching_keywords}
+
+---
+
+### ❌ Missing Skills/Keywords
+{missing_keywords}
+
+---
+
+### 💡 Recommendations for Improvement
+{recommendations}
+
+---
+
+### 🧠 ATS Optimization Score
+{ats_score}
+"""
+    return analysis_result
+
+
 
 
 def ask_question_about_resume(resume_text, job_title, job_description, question):
@@ -62,6 +176,16 @@ Please provide a clear and helpful answer based on the analysis.
         return response.text
     except Exception as e:
         return f"Error: {e}"
+
+
+
+
+
+
+
+
+
+
 
 
 
