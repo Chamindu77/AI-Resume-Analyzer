@@ -1,0 +1,54 @@
+# === Python cache files ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# === Virtual environment ===
+venv/
+env/
+.venv/
+
+# === Environment variables ===
+.env
+
+# === OS files ===
+.DS_Store
+Thumbs.db
+
+# === Logs and temporary files ===
+*.log
+*.tmp
+*.swp
+*.bak
+
+# === Jupyter Notebooks checkpoints (if any) ===
+.ipynb_checkpoints/
+
+# === VSCode settings (optional) ===
+.vscode/
+
+# === PyCharm settings (optional) ===
+.idea/
+
+# === Screenshot/image artifacts (optional, if not needed in repo) ===
+screenshoots/
+*.png
+*.jpg
+*.jpeg
+
+# === Streamlit cache (optional) ===
+.streamlit/
+
+# === Compiled files and artifacts ===
+*.so
+
+# === Test and coverage files (if testing is added) ===
+.coverage
+coverage.xml
+htmlcov/
+
+# === PEP8/linters (optional) ===
+.mypy_cache/
+.pytest_cache/
+pylint-report.txt
